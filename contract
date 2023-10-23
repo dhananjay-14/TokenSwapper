@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
+
+// Interface for ERC20 token transfer
+interface IERC20 {
+    function transfer(address recipient, uint256 amount) external returns (bool);
+}
+
+contract ERC20Swapper {
+    address public owner;
+    
+    constructor() {
+        owner = msg.sender;
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function");
+        _;
+    }
+
+    // Swaps Ether to an ERC-20 token
+    function swapEtherToToken(address token, uint minAmount) public payable returns (uint) {
+        require(msg.value > 0, "You must send Ether to perform the swap");
+        //Exchange rate : 1 Token = 0.000007 ETH
+        uint tokenAmount = msg.value / 7000000000000;
+
+        require(tokenAmount >= minAmount, "Received tokens are less than the required minimum");
+        
+        // Transfer tokens to the sender
+        require(IERC20(token).transfer(msg.sender, tokenAmount), "Token transfer failed");
+
+        return tokenAmount;
+    }
+
+    // Allows the owner to withdraw any excess Ether
+    function withdraw() public onlyOwner {
+        payable(owner).transfer(address(this).balance);
+    }
+}
